@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <div  class="box">
-      <li  v-for="user of users"  v-on:click="doShow($event)" v-bind:id=user.userid >
+      <li  v-for="user of users"  v-on:click="doShow($event)" v-bind:id=user.userid  v-bind:class="(user.online == 1)?'online':''">
          <em>{{user.username}}</em>
          <div>{{user.userid}}</div>
       </li>
@@ -13,6 +13,7 @@
   import api from '../api'
 
   export default {
+    props: ['user'],
     data () {
       return {
         users: {}
@@ -20,6 +21,7 @@
     },
     mounted () {
       var root = this
+
       api.getUserList(this, resp => {
         root.users = resp.body
       }, respErr => {
@@ -29,7 +31,31 @@
     methods: {
       doShow (e) {
         var tag = e.currentTarget
-        console.log(tag)
+        console.log(tag.id)
+        this.$socket.emit('msg', tag.id)
+      }
+    },
+    sockets: {
+      connect: function () {
+        console.log('socket connected')
+      },
+      msg: function (val) {
+        console.log(val)
+      },
+      login: function (val) {
+        console.log('set login mark' + val)
+        for (var i = 0; i < this.users.length; i++) {
+          if (this.users[i].userid === val) {
+            this.users[i].online = 1
+          }
+        }
+      }
+    },
+    watch: {
+      'user': function (val, oldVal) {
+        if (val !== null) {
+          this.$socket.emit('login', val)
+        }
       }
     }
   }
@@ -54,8 +80,12 @@ li {
 }
 
 li:hover {
+  border: 1px solid #666;
+}
+
+.online {
   border: 1px solid #ff6600;
-  background: rgba(255, 102, 0, .6);
+  background: #ff6600;
   color: #fff;
 }
 
@@ -73,7 +103,7 @@ li div{
    font-size: 12px;
    /*background: #aaa;*/
    padding: 2px 5px;
-   color: #999;
+   /*color: #999;*/
 }
 
 .box {
