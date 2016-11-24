@@ -1,10 +1,20 @@
 <template>
   <div class="home">
-    <div  class="box">
-      <li  v-for="user of users"  v-on:click="doShow($event)" v-bind:id=user.userid  v-bind:class="(user.online == 1)?'online':''">
-         <em>{{user.username}}</em>
-         <div>{{user.userid}}</div>
-      </li>
+    <div class="box">
+        <div class="title">考试课程：</div>
+        <div class="cont">{{infos.examname}}</div>
+    </div>
+    <div class="box">
+        <div class="title">开始时间：</div>
+        <div class="cont">{{infos.starttime}}</div>
+    </div>
+    <div class="box">
+        <div class="title">结束时间：</div>
+        <div class="cont">{{infos.endtime}} </div>
+    </div>
+    <div class="box">
+        <div class="title">{{$parent.timer.info}}：</div>
+        <div class="cont">{{$parent.timer.time}} </div>
     </div>
   </div>
 </template>
@@ -13,48 +23,30 @@
   import api from '../api'
 
   export default {
-    props: ['user'],
     data () {
       return {
-        users: {}
+        infos: {}
       }
     },
     mounted () {
       var root = this
 
-      api.getUserList(this, resp => {
-        root.users = resp.body
+      api.getExamInfo(this, resp => {
+        root.infos = resp.body[0]
+        this.startTime()
       }, respErr => {
         console.log('load user data failure...')
       })
     },
     methods: {
-      doShow (e) {
-        var tag = e.currentTarget
-        console.log(tag.id)
-        this.$socket.emit('msg', tag.id)
-      }
-    },
-    sockets: {
-      connect: function () {
-        console.log('socket connected')
+      startTime () {
+        setInterval(this.update, 1000)
       },
-      msg: function (val) {
-        console.log(val)
-      },
-      login: function (val) {
-        console.log('set login mark' + val)
-        for (var i = 0; i < this.users.length; i++) {
-          if (this.users[i].userid === val) {
-            this.users[i].online = 1
-          }
-        }
-      }
-    },
-    watch: {
-      'user': function (val, oldVal) {
-        if (val !== null) {
-          this.$socket.emit('login', val)
+      update () {
+        this.$parent.timer = api.caluTime(this.infos.starttime, this.infos.endtime)
+        if ((this.$parent.timer.type === 1) && (this.$parent.isLogin) && (this.$parent.user !== 'admin')) {
+          this.$parent.timer.type = 3
+          this.$router.push('exam')
         }
       }
     }
@@ -63,55 +55,36 @@
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-li {
-  list-style: none;
-  width: 100px;
-  background: #efefef;
-  margin:2px 5px;
-  text-align: center;
-  color: #333;
-  padding-top:2px;
-  border: 1px solid #aaa;
-  overflow: hidden;
-  cursor: pointer;
-  height: 70px;
+
+
+.home {
   display: flex;
   flex-direction: column;
-}
-
-li:hover {
-  border: 1px solid #666;
-}
-
-.online {
-  border: 1px solid #ff6600;
-  background: #ff6600;
-  color: #fff;
-}
-
-li em {
-  flex: 1;
-   font-style:normal;
-   font-weight: 600;
-   overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    padding: 10px 0
-}
-
-li div{
-   font-size: 12px;
-   /*background: #aaa;*/
-   padding: 2px 5px;
-   /*color: #999;*/
+  align-items: center;
+  justify-content: center;
+  padding:0;
+  padding-top: 100px;
 }
 
 .box {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
-  padding: 10px;
+  width: 500px;
 }
 
+.title {
+  width: 120px;
+  font: 24px/1.5 "Microsoft yahei";
+  font-weight: 600;
+  color: #000;
+  text-align: right
+}
+
+.cont{
+  flex: 1;
+  font: 24px/1.5 "Microsoft yahei";
+  font-weight: 600;
+  color: #666;
+}
 
 </style>

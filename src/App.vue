@@ -1,48 +1,53 @@
 <template>
   <div id="app">
     <div class="site">
-      <div class="site-title">Online Test Site</div>
-      <div class="site-login" @click="showLogin=true">Login</div>
+      <div class="site-title">Online Test Site  </div>
+      <div class="site-login" v-if="!isLogin" @click="showLogin=true">Login</div>
+      <div v-else>{{user}}</div>
       </div>
-    <div class="nav">
-      <router-link to="/">测试</router-link>
-      <router-link to="/result">阅卷</router-link>
-    </div>
 
     <router-view class="view"  v-bind:user="user"></router-view>
 
     <login-form v-if="showLogin" v-bind:show="showLogin"></login-form>
-    
   </div>
 </template>
 
 <script>
-import ResultView from './components/Result'
+require('../node_modules/font-awesome/css/font-awesome.min.css')
 import HomeView from './components/Home'
 import LoginForm from './components/LoginForm'
+// import ExamView from './components/Exam'
+// import ManageView from './components/Manage'
 
 export default {
   data () {
     return {
       user: {},
       showLogin: false,
-      showNotifications: false
+      showNotifications: false,
+      isLogin: false,
+      timer: ''
     }
   },
   components: {
-    ResultView,
+    // ManageView,
+    // ExamView
     HomeView,
     LoginForm
   },
-  methods: {
-    Login () {
-      console.log('login')
+  sockets: {
+    connect: function () {
+      console.log('socket connected')
     }
   }
 }
 </script>
 
 <style>
+html,body {
+  height: 100vh
+}
+
 #app {
   margin:0;
   padding: 0;
@@ -79,15 +84,10 @@ export default {
 }
 
 .site-login:hover {
-  background: #eee;
+  background: #009966;
 }
 
-.nav {
-  display: flex;
-  flex-direction: row;
-  padding: 0;
-  background: #000;
-}
+
 
 .nav a{
   padding:5px 20px;

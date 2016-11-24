@@ -35,14 +35,40 @@ MongoClient.connect(mongoUrl, function(err, db) {
     });
 });
 
-app.get('/userList', function(req, res, next) {
+app.get('/examInfo', function(req, res, next) {
 
-    var collection = _db.collection('userTable');
+    var collection = _db.collection('infoTable');
     collection.find({}).toArray(function(err, ret) {
         if (err) {
             console.error(err);
             return;
         }
+        res.json(ret);
+    });
+});
+
+app.get('/userList', function(req, res, next) {
+
+    var collection = _db.collection('userTable');
+    collection.find({userid: { $ne : "admin" }}).toArray(function(err, ret) {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        // console.log(ret);
+        res.json(ret);
+    });
+});
+
+app.get('/subjectList', function(req, res, next) {
+
+    var collection = _db.collection('examTable');
+    collection.find({"examid": "20160001"}).toArray(function(err, ret) {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        console.log(ret);
         res.json(ret);
     });
 });
@@ -65,11 +91,19 @@ app.post('/login', function(req, res, next) {
           console.log(entries)
           res.json(entries);
         } else {
+          //上线后更新状态
+          var collection = _db.collection('userTable');
+          collection.update({userid:usr }, {$set :{ 'online' : '1'}}, function(err, ret) {
+            if (err) {
+                console.error(err);
+                return;
+            }
+          });
           entries.code = 0;
           entries.msg = '登录成功！';
           entries.data = ret;
           res.json(entries);
-        }
+      }
     })
 });
 
@@ -83,20 +117,24 @@ var io = require('socket.io').listen(server);
 
 
 io.on('connection', function(socket) {
-
-  socket.on('msg', function(msg) {
-    console.log(' send msg ... ' + msg);
-    io.emit('msg', 'reveive');
-  });
+  var usr;
 
   socket.on('login', function(uid) {
+    usr = uid;
+    io.emit('refresh');
     console.log(uid + ' login the exam ... ');
-    io.emit('login', uid);
   });
 
-  //正常下线
-  socket.on('leave', function() {
-    socket.emit('disconnect');
+   socket.on('disconnect', function() {
+    var collection = _db.collection('userTable');
+    collection.update({userid:usr }, {$set :{ 'online' : '0'}}, function(err, ret) {
+      if (err) {
+          console.error(err);
+          return;
+      }
+    });
+    io.emit('refresh');
+    console.log(' offline...');
   });
 
 });

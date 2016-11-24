@@ -35,6 +35,13 @@ export default {
           console.log('success')
           this.$parent.user = resp.body.data.userid
           this.$parent.showLogin = false
+          this.$parent.isLogin = true
+          if (resp.body.data.userid === 'admin') {
+            this.$router.push('manage')
+          } else {
+            this.$router.push('exam')
+            this.$socket.emit('login', this.username)
+          }
         } else {
           console.log('err')
         }

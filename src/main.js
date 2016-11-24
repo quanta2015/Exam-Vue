@@ -5,8 +5,9 @@ import VueRouter from 'vue-router'
 import VueResource from 'vue-resource'
 import VueSocketio from 'vue-socket.io'
 
-import Result from 'components/Result.vue'
+import Manage from 'components/Manage.vue'
 import Home from 'components/Home.vue'
+import Exam from 'components/Exam.vue'
 
 Vue.use(VueRouter)
 Vue.use(VueResource)
@@ -15,7 +16,8 @@ Vue.use(VueSocketio, 'http://127.0.0.100:3000')
 const router = new VueRouter({
   routes: [
     { path: '/', component: Home },
-    { path: '/result', component: Result }
+    { path: '/manage', component: Manage },
+    { path: '/exam', component: Exam }
   ]
 })
 
