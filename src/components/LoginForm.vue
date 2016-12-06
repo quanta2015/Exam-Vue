@@ -38,9 +38,10 @@ export default {
           this.$parent.isLogin = true
           if (resp.body.data.userid === 'admin') {
             this.$router.push('manage')
+            this.$parent.showMsg('管理员成功登录')
           } else {
-            this.$router.push('exam')
             this.$socket.emit('login', this.username)
+            this.$parent.showMsg('已经进入考场！')
           }
         } else {
           console.log('err')

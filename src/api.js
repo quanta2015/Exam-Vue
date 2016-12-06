@@ -6,8 +6,9 @@ exports.getUserList = function (root, cb) {
   root.$http.get('http://localhost:8888/userList').then(cb)
 }
 
-exports.getSubjectList = function (root, cb) {
-  root.$http.get('http://localhost:8888/subjectList').then(cb)
+exports.getSubjectList = function (root, usr, cb) {
+  var jsonData = {usr: usr}
+  root.$http.post('http://localhost:8888/subjectList', jsonData).then(cb)
 }
 
 exports.login = function (root, usr, pwd, cb) {
@@ -49,3 +50,19 @@ exports.caluTime = function (fromtime, totime) {
   entries.time = hour + ':' + min + ':' + afterMin
   return entries
 }
+
+exports.saveExam = function (root, usr, subs, cb) {
+  var jsonData = {usr: usr, subs: subs}
+  root.$http.post('http://localhost:8888/saveExam', jsonData).then(cb)
+}
+
+exports.submitExam = function (root, usr, subs, cb) {
+  var jsonData = {usr: usr, subs: subs}
+  root.$http.post('http://localhost:8888/submitExam', jsonData).then(cb)
+}
+
+exports.startExam = function (root, usr, cb) {
+  var jsonData = {usr: usr}
+  root.$http.post('http://localhost:8888/startExam', jsonData).then(cb)
+}
+

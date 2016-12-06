@@ -7,6 +7,11 @@ var MongoClient = require('mongodb').MongoClient;
 var mongoUrl = 'mongodb://localhost:27017/exam';
 var _db;
 
+var S_OFFLINE = '0';
+var S_ONLINE = '1';
+var S_EXAM = '2';
+var S_FINISH = '3';
+
 app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(express.static('dist'));
@@ -60,17 +65,123 @@ app.get('/userList', function(req, res, next) {
     });
 });
 
-app.get('/subjectList', function(req, res, next) {
+app.post('/subjectList', function(req, res, next) {
+    var usr = req.body.usr;
+    var conditions = {userid: usr};
 
-    var collection = _db.collection('examTable');
-    collection.find({"examid": "20160001"}).toArray(function(err, ret) {
+    console.log(conditions);
+
+    var collection = _db.collection('resultTable');
+    collection.find(conditions).toArray(function(err, ret) {
         if (err) {
             console.error(err);
-            return;
+        } else {
+          if (ret.length !== 0) {
+            //如果已经保存过
+            res.json(ret[0].subs);
+          }else{
+            //刚刚进入考场
+            console.log('no')
+            var collection = _db.collection('examTable');
+            collection.find({"examid": "20160001"}).toArray(function(err, ret) {
+              if (err) {
+                console.error(err);
+              }else{
+                //根据模板新建考卷
+                var subs = ret;
+                for (var i = 0; i < subs.length; i++) {
+                  subs[i].result = ''
+                }
+                // console.log(subs);
+                //保存考卷到结果表
+                var colResult = _db.collection('resultTable');
+                colResult.update({userid: usr}, {$set : {subs : subs}}, {upsert : true}, function(err, ret) {
+                    if (err) {
+                        console.log(err)
+                    } else {
+                      res.json(subs);
+                  }
+                })// end of update 保存答题结果
+              }
+            })// end of find 查询试卷模板
+          }
         }
-        console.log(ret);
-        res.json(ret);
+    })// end of find 查询答题结果
+});
+
+// app.get('/subjectList', function(req, res, next) {
+//     var collection = _db.collection('examTable');
+//     collection.find({"examid": "20160001"}).toArray(function(err, ret) {
+//         if (err) {
+//             console.error(err);
+//             return;
+//         }
+//         console.log(ret);
+//         res.json(ret);
+//     });
+// });
+
+app.post('/startExam', function(req, res, next) {
+    var usr = req.body.usr;
+    var entries={};
+    var collection = _db.collection('userTable');
+    collection.update({userid:usr }, {$set :{ 'online' : S_EXAM}}, function(err, ret) {
+      if (err) {
+          console.error(err);
+      }else {
+        entries.code = 0;
+        entries.msg = '开始考试';
+        res.json(entries);
+        io.emit('refresh');
+      }
     });
+    
+});
+
+
+app.post('/saveExam', function(req, res, next) {
+    var usr = req.body.usr;
+    var subs = req.body.subs;
+    var entries={};
+
+    var conditions = {userid: usr};
+    var update = {$set : {subs : subs}};
+    var options    = {upsert : true};
+
+    var collection = _db.collection('resultTable');
+    collection.update(conditions, update, options, function(err, ret) {
+        if (err) {
+            console.log(err)
+        } else {
+          entries.code = 0;
+          entries.msg = '保存考卷成功';
+          res.json(entries);
+      }
+    })
+});
+
+app.post('/submitExam', function(req, res, next) {
+    var usr = req.body.usr;
+    var subs = req.body.subs;
+    var entries={};
+
+    var conditions = {userid: usr};
+    var update = {$set : {subs : subs}};
+    var options    = {upsert : true};
+
+    var collection = _db.collection('resultTable');
+    collection.update(conditions, update, options, function(err, ret) {
+        if (err) {
+            console.log(err)
+        } else {
+          setStatusMark(usr, S_FINISH);
+          entries.code = 0;
+          entries.msg = '提交考卷成功';
+          res.json(entries);
+          console.log('提交考卷成功')
+          io.emit('refresh');
+      }
+    })
 });
 
 app.post('/login', function(req, res, next) {
@@ -92,13 +203,14 @@ app.post('/login', function(req, res, next) {
           res.json(entries);
         } else {
           //上线后更新状态
-          var collection = _db.collection('userTable');
-          collection.update({userid:usr }, {$set :{ 'online' : '1'}}, function(err, ret) {
-            if (err) {
-                console.error(err);
-                return;
-            }
-          });
+          // var collection = _db.collection('userTable');
+          // collection.update({userid:usr }, {$set :{ 'online' : '1'}}, function(err, ret) {
+          //   if (err) {
+          //       console.error(err);
+          //       return;
+          //   }
+          // });
+          setStatusMark(usr, S_ONLINE);
           entries.code = 0;
           entries.msg = '登录成功！';
           entries.data = ret;
@@ -115,7 +227,6 @@ server.on('listening', onListening);
 
 var io = require('socket.io').listen(server);
 
-
 io.on('connection', function(socket) {
   var usr;
 
@@ -126,18 +237,22 @@ io.on('connection', function(socket) {
   });
 
    socket.on('disconnect', function() {
-    var collection = _db.collection('userTable');
-    collection.update({userid:usr }, {$set :{ 'online' : '0'}}, function(err, ret) {
-      if (err) {
-          console.error(err);
-          return;
-      }
-    });
-    io.emit('refresh');
-    console.log(' offline...');
+      setStatusMark(usr, S_OFFLINE);
+      io.emit('refresh');
+      console.log(' offline...');
   });
 
 });
+
+
+function setStatusMark(usr, mark) {
+  var collection = _db.collection('userTable');
+    collection.update({userid:usr }, {$set :{ 'online' : mark}}, function(err, ret) {
+      if (err) {
+          console.error(err);
+      }
+    });
+}
 
 
 

@@ -1,5 +1,6 @@
 <template>
-  <div class="home">
+  <div class="g-home">
+    
     <div class="box">
         <div class="title">考试课程：</div>
         <div class="cont">{{infos.examname}}</div>
@@ -55,9 +56,7 @@
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-
-
-.home {
+.g-home {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -69,11 +68,11 @@
 .box {
   display: flex;
   flex-direction: row;
-  width: 500px;
+  width: 600px;
 }
 
-.title {
-  width: 120px;
+.g-home .title {
+  width: 150px;
   font: 24px/1.5 "Microsoft yahei";
   font-weight: 600;
   color: #000;

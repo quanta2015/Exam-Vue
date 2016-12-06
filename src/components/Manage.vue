@@ -1,7 +1,8 @@
 <template>
   <div class="home">
     <div  class="box">
-      <li  v-for="user of users"  v-on:click="doShow($event)" v-bind:id=user.userid  v-bind:class="(user.online == 1)?'online':''">
+      <!-- <li  v-for="user of users"  v-on:click="doShow($event)" v-bind:id=user.userid  v-bind:class="(user.online == 1)?'online':''"> -->
+      <li  v-for="user of users"  v-on:click="doShow($event)" v-bind:id=user.userid  v-bind:class="{'online': (user.online==1), 'exam': (user.online==2), 'finish': (user.online==3)}">
          <em>{{user.username}}</em>
          <div>{{user.userid}}</div>
       </li>
@@ -67,6 +68,18 @@ li:hover {
 .online {
   border: 1px solid #ff6600;
   background: #ff6600;
+  color: #fff;
+}
+
+.finish {
+  border: 1px solid #006600;
+  background: #006600;
+  color: #fff;
+}
+
+.exam {
+  border: 1px solid #0099ff;
+  background: #0099ff;
   color: #fff;
 }
 
