@@ -1,18 +1,15 @@
-# my-project
+# Exam-Vue
 
-> A Vue.js project
+> 在线考试系统
 
-## Build Setup
+## 运行服务器
 
 ``` bash
-# install dependencies
-npm install
+# 运行后台服务器
+node server.js
 
-# serve with hot reload at localhost:8080
+# 运行vue服务器
 npm run dev
 
-# build for production with minification
-npm run build
 ```
 
-For detailed explanation on how things work, checkout the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
