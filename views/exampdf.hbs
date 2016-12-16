@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <link rel="stylesheet" href="/default.css">
+        <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    </head>
+    <body class="hold-transition login-page">
+        {{#each entries}}
+        <div class="g-result">
+            <div class="g-hd">
+                <div class="m-id">考生学号： {{userid}}  </div>
+                <div class="m-sc">试卷成绩：{{score}}</div>
+            </div>
+            <div class="g-bd">
+                {{#each subs}}
+                <div class="m-result">
+                    <div class="index">{{subIndex}}</div>
+                    <div class="title" >{{{subContent}}}</div>
+                  <pre><code class="hljs cpp">{{{html}}}</code></pre>
+                </div>
+                {{/each}}
+              </div>
+            {{/each}}
+        </div>
+    </body>
+    <style scoped>
+    body {
+        margin:0;
+        padding: 0;
+    }
+    .g-result {
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+    }
+    .g-hd {
+    padding-left: 20px;
+    padding-right: 20px;
+    color: #666;
+    font: 24px/1 "microsoft yahei";
+    border-bottom: 1px solid #c9c9c9;
+    min-height: 60px;
+    }
+    .g-bd {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    padding: 10px;
+    font-size: 16px;
+    padding: 10px 50px;
+    }
+    .m-score {
+    flex: 1;
+    text-align: center;
+    font-size: 48px;
+    color: #ff9900;
+    font-weight: 600;
+    }
+    .m-hd {
+    display: flex;
+    flex-direction: row;
+    padding: 20px 0 5px 10px;
+    }
+    .m-result {
+        position: relative;
+    }
+    .m-result .index {
+    position: absolute;
+    top: 20px;
+    left: -32px;
+    background: #ff6600;
+    width: 24px;
+    height: 24px;
+    border-radius: 12px;
+    color: #666;
+    text-align: center;
+    line-height: 1.5;
+    font-family: "microsoft yahei";
+    color: #fff;
+    }
+
+    .m-result .title {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 600;
+    color: #666;
+/*    display: flex;
+    align-items: center;*/
+    }
+    .m-result .m-mark {
+    width: 150px;
+    display: flex;
+    flex-direction: row-reverse;
+    font:16px/1 "microsoft yahei";
+    }
+    .m-result .m-mark:after {
+    content: "得分 : ";
+    margin: 2px 5px;
+    font-size: 24px;
+    color: #41B883;
+    }
+    .m-mark input {
+    color: #ff3300;
+    font-size: 24px;
+    font-weight: 600;
+    width: 60px;
+    border-radius: 0;
+    border: none;
+    border-bottom: 3px solid #999;
+    outline: none;
+    background: #fff;
+    box-shadow: none
+    }
+    .result textarea {
+    width: 100%;
+    background: #fff;
+    padding: 10px 15px;
+    outline: none;
+    border: none;
+    border-top: 1px solid #ccc;
+    }
+    a {
+    display: inline-block;
+    background: #41B883;
+    padding: 5px 20px;
+    color: #fff;
+    font-weight: 600;
+    font: 14px/1 "microsoft yahei";
+    text-decoration: none;
+    margin-right: 20px;
+    }
+    a:hover {
+    background: #41C883;
+    color: #fff;
+    text-decoration: none;
+    }
+
+    .m-id {
+       float: left;
+    }
+
+    .m-sc{
+        float: right;
+        font-size: 24px;
+        color: #ff3300;
+    }
+    </style>
+</html>

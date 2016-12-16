@@ -11,7 +11,8 @@ import Exam from 'components/Exam.vue'
 
 Vue.use(VueRouter)
 Vue.use(VueResource)
-Vue.use(VueSocketio, 'http://127.0.0.100:3000')
+Vue.use(VueSocketio, 'http://121.196.218.1:3000')
+// Vue.use(VueSocketio, 'http://localhost:3000')
 
 const router = new VueRouter({
   routes: [

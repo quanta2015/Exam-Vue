@@ -34,14 +34,18 @@ export default {
         if (resp.body.code === 0) {
           console.log('success')
           this.$parent.user = resp.body.data.userid
+          this.$parent.online = resp.body.data.online
           this.$parent.showLogin = false
           this.$parent.isLogin = true
           if (resp.body.data.userid === 'admin') {
             this.$router.push('manage')
             this.$parent.showMsg('管理员成功登录')
-          } else {
-            this.$socket.emit('login', this.username)
+          } else if (resp.body.data.online !== '3') {
+            this.$socket.emit('login', this.username, resp.body.data.online)
             this.$parent.showMsg('已经进入考场！')
+          } else if (resp.body.data.online === '3') {
+            this.$socket.emit('login', this.username, resp.body.data.online)
+            this.$parent.showMsg('您已经交卷！')
           }
         } else {
           console.log('err')

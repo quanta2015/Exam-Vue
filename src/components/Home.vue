@@ -31,12 +31,11 @@
     },
     mounted () {
       var root = this
-
       api.getExamInfo(this, resp => {
         root.infos = resp.body[0]
         this.startTime()
       }, respErr => {
-        console.log('load user data failure...')
+        console.log('load exam data failure...')
       })
     },
     methods: {

@@ -27,6 +27,7 @@ export default {
   data () {
     return {
       user: {},
+      online: {},
       showLogin: false,
       showNotifications: false,
       msg: '',
@@ -53,11 +54,7 @@ export default {
 }
 </script>
 
-<style>
-/*html,body {
-  height: 100%;
-}*/
-
+<style scope>
 #app {
   margin:0;
   padding: 0;
@@ -67,13 +64,6 @@ export default {
   background: #fff;
 }
 
-.nav {
-  display: flex;
-  flex-direction: row;
-  padding: 10px;
-  background: #6f6f6f;
-  min-height: 45px;
-}
 
 .site {
   font: 24px/1.5 "microsoft yahei";
@@ -118,15 +108,5 @@ export default {
   margin-right: 20px;
 }
 
-.nav a{
-  padding:5px 20px;
-  text-decoration: none;
-  cursor: pointer;
-  color:#fff;
-}
-
-.nav a:hover{
-  color: #ff6600;
-}
 
 </style>

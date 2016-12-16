@@ -1,10 +1,10 @@
 <template>
   <div class="exam">
       <div class="nav">
-          <a href="javascript:void(0);" v-if="!start" @click="startExam()"><i class="fa fa-play fa-fw"></i> 开始考试</a>
-          <a href="javascript:void(0);" @click="saveExam()"><i class="fa fa-save fa-fw"></i> 保存考卷</a>
-          <a href="javascript:void(0);" @click="submitExam()"><i class="fa fa-eject fa-fw"></i> 提交考卷</a>
-          <a href="javascript:void(0);" @click="showResult()"><i class="fa fa-book fa-fw"></i> 查看结果</a>
+          <a href="javascript:void(0);" v-if="(!start)&&($parent.online!=='3')" @click="startExam()"><i class="fa fa-play fa-fw"></i> 开始考试</a>
+          <a href="javascript:void(0);"  v-if="($parent.online!=='3')"  @click="saveExam()"><i class="fa fa-save fa-fw"></i> 保存考卷</a>
+          <a href="javascript:void(0);" v-if="($parent.online!=='3')" @click="submitExam()"><i class="fa fa-eject fa-fw"></i> 提交考卷</a>
+          <a href="javascript:void(0);" @click="showResult()"><i class="fa fa-book fa-fw"></i> 查看答卷</a>
           <div class="sep"></div>
           <div class="info">[ {{$parent.timer.info}} ] -  [ {{$parent.timer.time}} ]</div>
       </div>
@@ -39,7 +39,7 @@
       return {
         subs: {},
         index: 0,
-        timer: '',
+        timer: null,
         start: false,
         show: false,
         result: {
@@ -63,11 +63,11 @@
     methods: {
       startExam (e) {
         this.start = true
-        setInterval(this.saveExam, 120000)
+        this.timer = setInterval(this.saveExam, 60000)
         api.startExam(this, this.$parent.user, resp => {
           this.$parent.showMsg(resp.body.msg)
         }, respErr => {
-          this.$parent.showMsg('提交考卷失败！')
+          this.$parent.showMsg('开始考试出错！')
         })
       },
       doShowSub (e) {
@@ -77,7 +77,7 @@
         // autosize(document.querySelectorAll('textarea'))
       },
       saveExam () {
-        api.saveExam(this, this.$parent.user, this.subs, resp => {
+        api.saveExam(this, this.$parent.user, this.subs, 0, resp => {
           this.$parent.showMsg(resp.body.msg)
         }, respErr => {
           this.$parent.showMsg('保存考卷失败！')
@@ -86,6 +86,8 @@
       submitExam () {
         api.submitExam(this, this.$parent.user, this.subs, resp => {
           this.$parent.showMsg(resp.body.msg)
+          this.$parent.online = '3'
+          clearInterval(this.timer)
         }, respErr => {
           this.$parent.showMsg('提交考卷失败！')
         })

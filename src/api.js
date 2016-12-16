@@ -1,19 +1,27 @@
-exports.getExamInfo = function (root, cb1, cb2) {
-  root.$http.get('http://localhost:8888/examInfo').then(cb1).then(cb2)
+var serverIp = 'http://121.196.218.1:8888'
+// var serverIp = 'http://localhost:8888'
+
+exports.getExamInfo = function (root, cb1) {
+  root.$http.get(serverIp + '/examInfo').then(cb1)
+}
+
+exports.saveExamInfo = function (root, infos, cb) {
+  var jsonData = {infos: infos}
+  root.$http.post(serverIp + '/saveExamInfo', jsonData).then(cb)
 }
 
 exports.getUserList = function (root, cb) {
-  root.$http.get('http://localhost:8888/userList').then(cb)
+  root.$http.get(serverIp + '/userList').then(cb)
 }
 
 exports.getSubjectList = function (root, usr, cb) {
   var jsonData = {usr: usr}
-  root.$http.post('http://localhost:8888/subjectList', jsonData).then(cb)
+  root.$http.post(serverIp + '/subjectList', jsonData).then(cb)
 }
 
 exports.login = function (root, usr, pwd, cb) {
   var jsonData = {usr: usr, pwd: pwd}
-  root.$http.post('http://localhost:8888/login', jsonData).then(cb)
+  root.$http.post(serverIp + '/login', jsonData).then(cb)
 }
 
 exports.caluTime = function (fromtime, totime) {
@@ -51,18 +59,27 @@ exports.caluTime = function (fromtime, totime) {
   return entries
 }
 
-exports.saveExam = function (root, usr, subs, cb) {
-  var jsonData = {usr: usr, subs: subs}
-  root.$http.post('http://localhost:8888/saveExam', jsonData).then(cb)
+exports.saveExam = function (root, usr, subs, score, cb) {
+  var jsonData = {usr: usr, subs: subs, score: score}
+  root.$http.post(serverIp + '/saveExam', jsonData).then(cb)
 }
 
 exports.submitExam = function (root, usr, subs, cb) {
   var jsonData = {usr: usr, subs: subs}
-  root.$http.post('http://localhost:8888/submitExam', jsonData).then(cb)
+  root.$http.post(serverIp + '/submitExam', jsonData).then(cb)
 }
 
 exports.startExam = function (root, usr, cb) {
   var jsonData = {usr: usr}
-  root.$http.post('http://localhost:8888/startExam', jsonData).then(cb)
+  root.$http.post(serverIp + '/startExam', jsonData).then(cb)
+}
+
+exports.exportPdf = function (root, cb) {
+  root.$http.get(serverIp + '/export').then(cb)
+}
+
+exports.uploadFile = function (root, file, cb) {
+  // var jsonData = {file}
+  root.$http.post(serverIp + '/uploadFile', file).then(cb)
 }
 

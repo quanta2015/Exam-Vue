@@ -2,6 +2,14 @@ var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 var morgan = require('morgan');
+var formidable = require('formidable');
+var csv = require('node-csv');
+var path = require('path');
+var fs = require('fs');
+var NodePDF = require('nodepdf');
+var port = normalizePort(process.env.PORT || '3000');
+
+var hljs = require('highlightjs')
 
 var MongoClient = require('mongodb').MongoClient;
 var mongoUrl = 'mongodb://localhost:27017/exam';
@@ -15,6 +23,11 @@ var S_FINISH = '3';
 app.use(morgan('dev'));
 app.use(bodyParser.json());
 app.use(express.static('dist'));
+app.use(express.static(path.join(__dirname, '/')));
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'hbs');
+app.set('port', port);
+
 
 app.all("*", function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
@@ -40,6 +53,39 @@ MongoClient.connect(mongoUrl, function(err, db) {
     });
 });
 
+app.get('/pdf', function(req, res, next) {
+    var collection = _db.collection('resultTable');
+    collection.find().toArray(function(err, ret) {
+        if (err) {
+          console.log(err);
+        }else{
+          // console.log(ret);
+          res.render('exampdf', { entries: ret });
+        }
+      })
+});
+
+
+app.get('/export', function (req, res, next) {
+
+  var host = req.protocol + '://' + req.hostname+ ':3000/pdf';
+  var pdffile =  'pdf\\exam' + Date.now() + '.pdf';
+
+  console.log(host);
+  console.log(pdffile);
+
+  NodePDF.render(host, pdffile, function(err, filePath){
+    if (err) {
+      console.log(err);
+    }else{
+      fs.readFile(pdffile , function (err,data){
+        res.contentType("application/pdf");
+        res.send(data);
+      });
+    }
+  });
+})
+
 app.get('/examInfo', function(req, res, next) {
 
     var collection = _db.collection('infoTable');
@@ -50,6 +96,28 @@ app.get('/examInfo', function(req, res, next) {
         }
         res.json(ret);
     });
+});
+
+
+app.post('/saveExamInfo', function(req, res, next) {
+
+    var infos = req.body.infos;
+    var entries={};
+
+    var conditions = {examid: infos.examid};
+    var update = {$set : {examname : infos.examname, examdate: infos.examdate, starttime: infos.starttime, endtime: infos.endtime}};
+    var options    = {upsert : true};
+
+    var collection = _db.collection('infoTable');
+    collection.update(conditions, update, options, function(err, ret) {
+        if (err) {
+            console.log(err)
+        } else {
+          entries.code = 0;
+          entries.msg = '保存考试信息成功';
+          res.json(entries);
+      }
+    })
 });
 
 app.get('/userList', function(req, res, next) {
@@ -77,8 +145,13 @@ app.post('/subjectList', function(req, res, next) {
             console.error(err);
         } else {
           if (ret.length !== 0) {
-            //如果已经保存过
-            res.json(ret[0].subs);
+            //如果已经保存过 动态生成语法敏感代码
+            var subs = ret[0].subs;
+            for(var i=0;i<subs.length;i++) {
+              subs[i].html = hljs.highlightAuto(subs[i].result).value;
+            }
+            
+            res.json(subs);
           }else{
             //刚刚进入考场
             console.log('no')
@@ -91,11 +164,12 @@ app.post('/subjectList', function(req, res, next) {
                 var subs = ret;
                 for (var i = 0; i < subs.length; i++) {
                   subs[i].result = ''
+                  subs[i].mark = '0'
                 }
                 // console.log(subs);
                 //保存考卷到结果表
                 var colResult = _db.collection('resultTable');
-                colResult.update({userid: usr}, {$set : {subs : subs}}, {upsert : true}, function(err, ret) {
+                colResult.update({userid: usr}, {$set : {subs : subs, score: 0}}, {upsert : true}, function(err, ret) {
                     if (err) {
                         console.log(err)
                     } else {
@@ -108,18 +182,6 @@ app.post('/subjectList', function(req, res, next) {
         }
     })// end of find 查询答题结果
 });
-
-// app.get('/subjectList', function(req, res, next) {
-//     var collection = _db.collection('examTable');
-//     collection.find({"examid": "20160001"}).toArray(function(err, ret) {
-//         if (err) {
-//             console.error(err);
-//             return;
-//         }
-//         console.log(ret);
-//         res.json(ret);
-//     });
-// });
 
 app.post('/startExam', function(req, res, next) {
     var usr = req.body.usr;
@@ -142,11 +204,16 @@ app.post('/startExam', function(req, res, next) {
 app.post('/saveExam', function(req, res, next) {
     var usr = req.body.usr;
     var subs = req.body.subs;
+    var score = req.body.score;
     var entries={};
 
     var conditions = {userid: usr};
-    var update = {$set : {subs : subs}};
+    var update = {$set : {subs : subs, score: score}};
     var options    = {upsert : true};
+
+    for(var i=0;i<subs.length;i++) {
+      subs[i].html = hljs.highlightAuto(subs[i].result).value;
+    }
 
     var collection = _db.collection('resultTable');
     collection.update(conditions, update, options, function(err, ret) {
@@ -159,6 +226,7 @@ app.post('/saveExam', function(req, res, next) {
       }
     })
 });
+
 
 app.post('/submitExam', function(req, res, next) {
     var usr = req.body.usr;
@@ -184,6 +252,49 @@ app.post('/submitExam', function(req, res, next) {
     })
 });
 
+app.post('/uploadFile', function(req, res, next) {
+  var form = new formidable.IncomingForm();
+  var path = "";
+  var entries = {};
+
+  form.encoding = 'utf-8';
+  form.uploadDir = "upload";
+  form.keepExtensions = true;
+  form.maxFieldsSize = 30000 * 1024 * 1024;
+  form.parse(req);
+
+  form.on('field', function(field, value) {})
+      .on('file', function(field, file) {
+        path = '\\' + file.path;
+      })
+      .on('end', function() {
+        console.log('-> upload done\n');
+        var excelFile = __dirname  + path;
+        var csvParser = csv.createParser();
+        csvParser.parseFile(excelFile, function(err, data) {
+            if (err) { return next(err); }
+
+            
+            arr = [];
+            for(var i=0;i<data.length;i++){
+                arr.push({"userid":data[i][0],"pwd":data[i][0],"username":data[i][1],"class":data[i][2],"online":"0"});
+            }
+            var collection = _db.collection('userTable');
+            collection.insertMany(arr , function(err, docs) {
+              if (err) { 
+                return next(err); 
+              } else {
+                entries.code = 0;
+                res.writeHead(200, { 'content-type': 'text/json' });
+                res.end(JSON.stringify(entries));
+              }
+            })
+        });
+        
+      })
+});
+
+
 app.post('/login', function(req, res, next) {
     var usr = req.body.usr;
     var pwd = req.body.pwd;
@@ -202,15 +313,10 @@ app.post('/login', function(req, res, next) {
           console.log(entries)
           res.json(entries);
         } else {
-          //上线后更新状态
-          // var collection = _db.collection('userTable');
-          // collection.update({userid:usr }, {$set :{ 'online' : '1'}}, function(err, ret) {
-          //   if (err) {
-          //       console.error(err);
-          //       return;
-          //   }
-          // });
-          setStatusMark(usr, S_ONLINE);
+          console.log('online mark is ' + ret.online);
+          if (ret.online !== '3') {
+            setStatusMark(usr, S_ONLINE);
+          }
           entries.code = 0;
           entries.msg = '登录成功！';
           entries.data = ret;
@@ -221,7 +327,7 @@ app.post('/login', function(req, res, next) {
 
 var http = require('http');
 var server = http.createServer(app);
-server.listen(3000);
+server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 
@@ -229,20 +335,45 @@ var io = require('socket.io').listen(server);
 
 io.on('connection', function(socket) {
   var usr;
+  var online;
 
-  socket.on('login', function(uid) {
+  socket.on('login', function(uid, status) {
     usr = uid;
+    online = status;
     io.emit('refresh');
     console.log(uid + ' login the exam ... ');
   });
 
    socket.on('disconnect', function() {
-      setStatusMark(usr, S_OFFLINE);
-      io.emit('refresh');
-      console.log(' offline...');
+
+    var collection = _db.collection('userTable');
+    collection.findOne({userid:usr }, function(err, ret) {
+      if (err) {
+          console.error(err);
+      }else{
+         if (ret !== null) {
+            if (ret.online !== '3') {
+              setStatusMark(usr, S_OFFLINE);
+            }
+           io.emit('refresh');
+          console.log(' offline...');
+        }
+      }
+    });
   });
 
 });
+
+function getStatusMark(usr) {
+  var collection = _db.collection('userTable');
+    collection.find({userid:usr }, function(err, ret) {
+      if (err) {
+          console.error(err);
+      }else{
+         return ret.online;
+      }
+    });
+}
 
 
 function setStatusMark(usr, mark) {
@@ -253,6 +384,8 @@ function setStatusMark(usr, mark) {
       }
     });
 }
+
+
 
 
 
@@ -286,4 +419,17 @@ function onListening() {
     ? 'pipe ' + addr
     : 'port ' + addr.port;
    console.log('Listening on ' + bind);
+}
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+  return false;
 }
