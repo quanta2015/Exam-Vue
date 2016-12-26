@@ -9,10 +9,14 @@ import Manage from 'components/Manage.vue'
 import Home from 'components/Home.vue'
 import Exam from 'components/Exam.vue'
 
+import ElementUI from 'element-ui'
+import 'element-ui/lib/theme-default/index.css'
+Vue.use(ElementUI)
+
 Vue.use(VueRouter)
 Vue.use(VueResource)
-Vue.use(VueSocketio, 'http://121.196.218.1:3000')
-// Vue.use(VueSocketio, 'http://localhost:3000')
+// Vue.use(VueSocketio, 'http://121.196.218.1:3000')
+Vue.use(VueSocketio, 'http://localhost:3000')
 
 const router = new VueRouter({
   routes: [

@@ -3,15 +3,16 @@
     <div class="nav">
          <a  v-on:click="editInfo()"><i class="fa fa-print fa-edit"></i> 编辑信息</a>
          <a  v-on:click="imortData()"><i class="fa fa-send"></i> 导入名单</a>
+         <a  v-on:click="editProblem()"><i class="fa fa-pencil"></i> 编辑考题</a>
          
-         <a href="http://121.196.218.1:3000/pdf" target = _blank ><i class="fa fa-print fa-fw"></i> 导出PDF</a>
-          <!-- <a href="http://localhost:3000/pdf" target = _blank ><i class="fa fa-print fa-fw"></i> 导出PDF</a> -->
-          <a ><i class="fa fa-file fa-fw"></i> 导出Excel</a>
+         <!-- <a href="http://121.196.218.1:3000/pdf" target = _blank ><i class="fa fa-print fa-fw"></i> 导出PDF</a> -->
+          <a v-bind:href="server +'pdf'"  target = _blank ><i class="fa fa-print fa-fw"></i> 导出PDF</a>
+          <a  v-on:click="exportExcel()"><i class="fa fa-file fa-fw"></i> 导出Excel</a>
           <div class="sep"></div>
           <div class="info">[ {{$parent.timer.info}} ] -  [ {{$parent.timer.time}} ]</div>
     </div>
     <div  class="box">
-      <li  v-for="user of users"  v-on:click="doShow($event)" v-bind:id=user.userid  v-bind:class="{'online': (user.online==1), 'exam': (user.online==2), 'finish': (user.online==3), 'cls1': (user.class=='软工161'), 'cls2': (user.class=='软工162')}">
+      <li  v-for="user of users"  v-on:click="doShow($event)" v-bind:id=user.userid  v-bind:username=user.username   v-bind:class="{'online': (user.online==1), 'exam': (user.online==2), 'finish': (user.online==3), 'cls1': (user.class=='软工161'), 'cls2': (user.class=='软工162')}">
          <em>{{user.username}}</em>
          <div>{{user.userid}}</div>
       </li>
@@ -20,6 +21,7 @@
     <result-form v-if="show" v-bind:result="result"></result-form>
     <info-form  v-if="showInfo"></info-form>
     <import-form v-if="showImport" ></import-form>
+    <problem-form v-if="showProblem" ></problem-form>
   </div>
 </template>
 
@@ -28,15 +30,19 @@
   import ResultForm from './ResultForm'
   import InfoForm from './InfoForm'
   import ImportForm from './ImportForm'
+  import ProblemForm from './ProblemForm'
 
   export default {
     props: ['user'],
     data () {
       return {
+        // server: 'http://121.196.218.1:3000/',
+        server: 'http://localhost:3000/',
         users: {},
         show: false,
         showInfo: false,
         showImport: false,
+        showProblem: false,
         curUser: null,
         result: {
           subs: null,
@@ -48,7 +54,8 @@
     components: {
       ResultForm,
       InfoForm,
-      ImportForm
+      ImportForm,
+      ProblemForm
     },
     mounted () {
       var root = this
@@ -60,8 +67,7 @@
       doShow (e) {
         var tag = e.currentTarget
         this.curUser = tag.id
-        console.log(tag.id)
-        api.getSubjectList(this, tag.id, resp => {
+        api.getSubjectList(this, tag.id, tag.username, resp => {
           this.show = true
           console.log(resp.body)
           this.result.subs = resp.body
@@ -75,6 +81,17 @@
       },
       imortData () {
         this.showImport = true
+      },
+      editProblem () {
+        this.showProblem = true
+      },
+      exportExcel () {
+        api.exportExcel(this, resp => {
+          console.log(resp.body)
+          window.open('http://localhost:3000/' + resp.body.url)
+        }, respErr => {
+          this.$parent.showMsg('导出Excel失败！')
+        })
       }
     },
     sockets: {

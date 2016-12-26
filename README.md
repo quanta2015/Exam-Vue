@@ -13,3 +13,11 @@ npm run dev
 
 ```
 
+
+## 发布注意
+
+1. manage.vue
+2. main.js
+3. server.js  `dbname`
+4. webpack.base.conf.js
+

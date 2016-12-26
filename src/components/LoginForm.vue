@@ -34,6 +34,7 @@ export default {
         if (resp.body.code === 0) {
           console.log('success')
           this.$parent.user = resp.body.data.userid
+          this.$parent.username = resp.body.data.username
           this.$parent.online = resp.body.data.online
           this.$parent.showLogin = false
           this.$parent.isLogin = true

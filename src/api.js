@@ -1,8 +1,12 @@
-var serverIp = 'http://121.196.218.1:8888'
-// var serverIp = 'http://localhost:8888'
+// var serverIp = 'http://121.196.218.1:8888'
+var serverIp = 'http://localhost:8888'
 
-exports.getExamInfo = function (root, cb1) {
-  root.$http.get(serverIp + '/examInfo').then(cb1)
+exports.getExamInfo = function (root, cb) {
+  root.$http.get(serverIp + '/examInfo').then(cb)
+}
+
+exports.getProblemInfo = function (root, cb) {
+  root.$http.get(serverIp + '/problemInfo').then(cb)
 }
 
 exports.saveExamInfo = function (root, infos, cb) {
@@ -10,12 +14,17 @@ exports.saveExamInfo = function (root, infos, cb) {
   root.$http.post(serverIp + '/saveExamInfo', jsonData).then(cb)
 }
 
+exports.saveProblems = function (root, infos, cb) {
+  var jsonData = {infos: infos}
+  root.$http.post(serverIp + '/saveProblems', jsonData).then(cb)
+}
+
 exports.getUserList = function (root, cb) {
   root.$http.get(serverIp + '/userList').then(cb)
 }
 
-exports.getSubjectList = function (root, usr, cb) {
-  var jsonData = {usr: usr}
+exports.getSubjectList = function (root, usr, username, cb) {
+  var jsonData = {usr: usr, username: username}
   root.$http.post(serverIp + '/subjectList', jsonData).then(cb)
 }
 
@@ -83,3 +92,6 @@ exports.uploadFile = function (root, file, cb) {
   root.$http.post(serverIp + '/uploadFile', file).then(cb)
 }
 
+exports.exportExcel = function (root, cb) {
+  root.$http.get(serverIp + '/exportExcel').then(cb)
+}

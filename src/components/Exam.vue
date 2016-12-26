@@ -54,7 +54,7 @@
     mounted () {
       // autosize(document.querySelectorAll('textarea'))
       var root = this
-      api.getSubjectList(this, this.$parent.user, resp => {
+      api.getSubjectList(this, this.$parent.user, this.$parent.username, resp => {
         root.subs = resp.body
       }, respErr => {
         console.log('load user data failure...')
@@ -84,16 +84,22 @@
         })
       },
       submitExam () {
-        api.submitExam(this, this.$parent.user, this.subs, resp => {
-          this.$parent.showMsg(resp.body.msg)
-          this.$parent.online = '3'
-          clearInterval(this.timer)
-        }, respErr => {
-          this.$parent.showMsg('提交考卷失败！')
-        })
+        this.$confirm('确定交卷?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          api.submitExam(this, this.$parent.user, this.subs, resp => {
+            this.$parent.showMsg(resp.body.msg)
+            this.$parent.online = '3'
+            clearInterval(this.timer)
+          }, respErr => {
+            this.$parent.showMsg('提交考卷失败！')
+          })
+        }).catch(() => {})
       },
       showResult () {
-        api.getSubjectList(this, this.$parent.user, resp => {
+        api.getSubjectList(this, this.$parent.user, this.$parent.username, resp => {
           this.show = true
           this.result.subs = resp.body
           this.result.user = this.$parent.user

@@ -3,7 +3,8 @@ var app = express();
 var bodyParser = require('body-parser');
 var morgan = require('morgan');
 var formidable = require('formidable');
-var csv = require('node-csv');
+var nodecsv = require('node-csv');
+var csv = require('csv');
 var path = require('path');
 var fs = require('fs');
 var NodePDF = require('nodepdf');
@@ -69,7 +70,7 @@ app.get('/pdf', function(req, res, next) {
 app.get('/export', function (req, res, next) {
 
   var host = req.protocol + '://' + req.hostname+ ':3000/pdf';
-  var pdffile =  'pdf\\exam' + Date.now() + '.pdf';
+  var pdffile =  'tmp\\exam' + Date.now() + '.pdf';
 
   console.log(host);
   console.log(pdffile);
@@ -86,6 +87,20 @@ app.get('/export', function (req, res, next) {
   });
 })
 
+
+app.get('/problemInfo', function(req, res, next) {
+
+    var collection = _db.collection('examTable');
+    collection.find({}).toArray(function(err, ret) {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        // console.log(ret)
+        res.json(ret);
+    });
+});
+
 app.get('/examInfo', function(req, res, next) {
 
     var collection = _db.collection('infoTable');
@@ -96,6 +111,22 @@ app.get('/examInfo', function(req, res, next) {
         }
         res.json(ret);
     });
+});
+
+app.post('/saveProblems', function(req, res, next) {
+
+    var infos = req.body.infos;
+
+    for(var i =0; i< infos.length; i++) {
+      var conditions = {subIndex: infos[i].subIndex};
+      var update = {$set : {subContent: infos[i].subContent, examid : infos[i].examid}};
+      var options    = {upsert : true};
+          var collection = _db.collection('examTable');
+          collection.update(conditions, update, options, function(err, ret) {
+              if (err) console.error(err);
+          })
+    }
+
 });
 
 
@@ -135,6 +166,7 @@ app.get('/userList', function(req, res, next) {
 
 app.post('/subjectList', function(req, res, next) {
     var usr = req.body.usr;
+    var username = req.body.username;
     var conditions = {userid: usr};
 
     console.log(conditions);
@@ -169,7 +201,7 @@ app.post('/subjectList', function(req, res, next) {
                 // console.log(subs);
                 //保存考卷到结果表
                 var colResult = _db.collection('resultTable');
-                colResult.update({userid: usr}, {$set : {subs : subs, score: 0}}, {upsert : true}, function(err, ret) {
+                colResult.update({userid: usr}, {$set : {username: username, subs : subs, score: 0}}, {upsert : true}, function(err, ret) {
                     if (err) {
                         console.log(err)
                     } else {
@@ -258,7 +290,7 @@ app.post('/uploadFile', function(req, res, next) {
   var entries = {};
 
   form.encoding = 'utf-8';
-  form.uploadDir = "upload";
+  form.uploadDir = "tmp";
   form.keepExtensions = true;
   form.maxFieldsSize = 30000 * 1024 * 1024;
   form.parse(req);
@@ -270,7 +302,7 @@ app.post('/uploadFile', function(req, res, next) {
       .on('end', function() {
         console.log('-> upload done\n');
         var excelFile = __dirname  + path;
-        var csvParser = csv.createParser();
+        var csvParser = nodecsv.createParser();
         csvParser.parseFile(excelFile, function(err, data) {
             if (err) { return next(err); }
 
@@ -294,6 +326,40 @@ app.post('/uploadFile', function(req, res, next) {
       })
 });
 
+app.get('/exportExcel', function(req, res, next) {
+
+    var collection = _db.collection('resultTable');
+    collection.find({}).toArray(function(err, ret) {
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        arr = [];
+        for(var i=0;i<ret.length;i++){
+            var sum =0;
+            for(var j=0;j<ret[i].subs.length;j++){
+                sum += parseInt(ret[i].subs[j].mark)
+            }
+            arr.push({"userid":ret[i].userid, "username":ret[i].username,"mark": sum});
+        }
+        csv.stringify(arr, function(err, data){
+            var file =  'tmp\\result' + Date.now() + '.csv';
+            fs.writeFile(file, data, function (err) {
+                if (err) { 
+                    throw err;
+                    return;
+                }else {
+                    console.log("Export Excel Success!");
+                    var entries={};
+                    entries.code = 0;
+                    entries.url = file
+                    res.send(entries);
+                }
+            });
+       });
+    });
+});
 
 app.post('/login', function(req, res, next) {
     var usr = req.body.usr;

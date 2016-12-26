@@ -6,6 +6,8 @@
       <!-- <div class="site-login" @click="showMsg('aaa')">Show</div> -->
       <div class="site-login" v-if="!isLogin" @click="showLogin=true">Login</div>
       <div class="site-user" v-else>{{user}}</div>
+
+      <div class="site-login" v-if="isLogin" @click="logout()">Logout</div>
       </div>
 
     <router-view class="view"  v-bind:user="user"></router-view>
@@ -27,6 +29,7 @@ export default {
   data () {
     return {
       user: {},
+      username: {},
       online: {},
       showLogin: false,
       showNotifications: false,
@@ -49,6 +52,11 @@ export default {
     showMsg (msg) {
       this.msg = msg
       this.showNotifications = true
+    },
+    logout () {
+      this.isLogin = false
+      this.showLogin = true
+      this.$router.push('/')
     }
   }
 }

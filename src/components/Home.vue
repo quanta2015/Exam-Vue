@@ -1,6 +1,6 @@
 <template>
   <div class="g-home">
-    
+
     <div class="box">
         <div class="title">考试课程：</div>
         <div class="cont">{{infos.examname}}</div>
@@ -18,6 +18,8 @@
         <div class="cont">{{$parent.timer.time}} </div>
     </div>
   </div>
+
+
 </template>
 
 <script>
